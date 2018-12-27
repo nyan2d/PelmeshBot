@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using PelmeshBot.Core.Replies;
 using Telegram.Bot.Types;
 
@@ -13,24 +12,44 @@ namespace PelmeshBot.Core.Commands
 
         public IReply Execute(Message message)
         {
+            var min = 1;
+            var max = 98;
+
             var cmd = CommandMessage.Parse(message.Text);
-            var limit = 99;
-            if (cmd.Arguments.Length > 0)
+            var split = cmd.Arguments.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+
+            if (split.Length > 0)
             {
-                var split = cmd.Arguments.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                if (int.TryParse(split.First(), out int ulimit))
+                // чекаем первый аргумент
+                if (int.TryParse(split[0], out int first))
                 {
-                    if (ulimit > 0)
+                    // чекаем второй аргумент
+                    if (split.Length > 1 && int.TryParse(split[1], out int second))
                     {
-                        limit = ulimit;
+                        // команда с двумя правильными аргументами
+                        min = first;
+                        max = second;
+                    } else
+                    {
+                        // команда с одним правильным аргументом
+                        max = first;
                     }
                 }
-                else
-                {
-                    return new TextReply(message.Chat.Id, "Ты дебил?", replyToMessageId: message.MessageId);
-                }
             }
-            return new TextReply(message.Chat.Id, $"{_random.Next(limit)+1}", replyToMessageId: message.MessageId);
+
+            // фиксим лимиты
+            if (max < 1) max = 1;
+            if (min < 1) min = 1;
+            if (max < min)
+            {
+                var tmp = min;
+                min = max;
+                max = tmp;
+            }
+
+            var roll = _random.Next(min, max + 1);
+            return new TextReply(message.Chat.Id, roll.ToString(), replyToMessageId: message.MessageId);
         }
     }
 }
